@@ -1,0 +1,32 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: offgrid
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build: .
+    depends_on:
+      - db
+    environment:
+      PORT: 3000
+      LOG_LEVEL: info
+      AUTH_SERVICE_URL: http://auth:4000
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/offgrid
+      CORS_ORIGINS: http://localhost:3000
+    ports:
+      - '3000:3000'
+    command: ["sh", "-c", "npm run prisma:migrate && node dist/index.js"]
+    restart: unless-stopped
+
+volumes:
+  postgres_data: {}
